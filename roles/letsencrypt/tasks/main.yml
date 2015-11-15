@@ -1,0 +1,63 @@
+---
+- name: Install dependencies
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - build-essential
+    - libffi-dev
+    - libssl-dev
+    - python-dev
+    - python-pip
+    - git
+    - dialog
+    - python-virtualenv
+
+- name: Install/Update pip packages pip
+  pip:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - pip
+    - pyopenssl
+    - ndg-httpsclient
+    - pyasn1
+
+- name: Add github.com to global known_hosts
+  known_hosts:
+    path: "/etc/ssh/ssh_known_hosts"
+    name: "github.com"
+    key: "{{ lookup('file', 'github_key.txt')  }}"
+    state: present
+
+- name: Checkout letsencrypt
+  git:
+    repo: "https://github.com/letsencrypt/letsencrypt"
+    dest: "{{ letsencrypt_gitlocation }}/"
+    version: master
+    force: yes
+  register: git_updated
+
+- name: Install letsencrypt
+  command: "./letsencrypt-auto --agree-tos --agree-dev-preview"
+  args:
+    chdir: "{{ letsencrypt_gitlocation }}/"
+    creates: "{{ letsencrypt_bin }}"
+  ignore_errors: True
+
+- name: Update letsencrypt
+  command: "./letsencrypt-auto --agree-tos --agree-dev-preview"
+  register: upgrade_result
+  args:
+    chdir: "{{ letsencrypt_gitlocation }}/"
+  failed_when: "'FAILED' in upgrade_result.stderr"
+  when: git_updated|changed
+
+- name: symlink letsencrypt bin
+  file:
+    src: "{{ letsencrypt_bin }}"
+    dest: /usr/bin/letsencrypt
+    state: link
+
+- include: generate-crt.yml
+  when: subdomain is defined and domain is defined and letsencrypt_email is defined

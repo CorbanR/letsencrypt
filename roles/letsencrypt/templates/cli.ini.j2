@@ -1,0 +1,28 @@
+# This is an example of the kind of things you can do in a configuration file.
+# All flags used by the client can be configured here. Run Let's Encrypt with
+# "--help" to learn more about the available options.
+
+# Use a 4096 bit RSA key instead of 2048
+rsa-key-size = {{ rsa_key_size }}
+
+# Always use the staging/testing server
+server = {{ letsencrypt_server }}
+
+{% if letsencrypt_email %}
+# Uncomment and update to register with the specified e-mail address
+email = {{ letsencrypt_email }}
+{% endif %}
+{% if text_interface is defined %}
+# Uncomment to use a text interface instead of ncurses
+text = True
+{% endif %}
+{% if authenticator == "standalone" %}
+# Uncomment to use the standalone authenticator on port 443
+authenticator = standalone
+standalone-supported-challenges = {{ standalone_supported_challenges }}
+{% elif authenticator == "webroot" and webroot_path %}
+# Uncomment to use the webroot authenticator. Replace webroot-path with the
+# path to the public_html / webroot folder being served by your web server.
+authenticator = webroot
+webroot-path = {{ webroot_path }}
+{% endif %}
