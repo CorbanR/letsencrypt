@@ -29,7 +29,7 @@ Example:
     domain: example.com
     letsencrypt_email: example@example.com
   roles:
-    - craun.letsencrypt
+    - CorbanR.letsencrypt
 ```
 
 Defaults
