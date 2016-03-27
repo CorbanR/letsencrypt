@@ -1,3 +1,4 @@
+![alt text](https://travis-ci.org/CorbanR/letsencrypt.svg?branch=master)
 letsencrypt
 -------------------
 Installs letsencrypt and generates/installs a certificate.
