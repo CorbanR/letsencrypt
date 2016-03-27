@@ -12,23 +12,43 @@
     path: "{{ certificate_path }}/{{ subdomain }}.{{ domain }}/cert.pem"
   register: cert_exists
 
-- name: Check to see when cert expires
-  command: "echo $((($(date --date \"$(date --date \"$(openssl x509 -in {{ certificate_path }}/{{ subdomain }}.{{ domain }}/cert.pem -noout -enddate | sed -n 's/notAfter=//p')\")\" +%s)-$(date --date now +%s))/86400))"
-  register: days_remaining
-  when: cert_exists.stat.exists
+- block:
+    - name: Check to see when cert expires
+      shell: "echo $((($(date --date \"$(date --date \"$(openssl x509 -in {{ certificate_path }}/{{ subdomain }}.{{ domain }}/cert.pem -noout -enddate | sed -n 's/notAfter=//p')\")\" +%s)-$(date --date now +%s))/86400))"
+      register: days_remaining
 
-- name: Generate certificate (Standalone) no install
-  command: "letsencrypt certonly --agree-tos -d {{ subdomain }}.{{ domain }}"
-  when: "({{ authenticator }} == 'standalone' and not {{ cert_exists.stat.exists }}) or ({{ cert_exists.stat.exists }} and {{ days_remaining | int }} < {{ renew_days }})"
+    - name: Set ssl_days_remaining fact
+      set_fact:
+        ssl_days_remaining: "{{ days_remaining.stdout | int + 1 }}"
 
-- name: Generate certificate (Standalone) apache install
-  command: "letsencrypt --installer apache --agree-tos -d {{ subdomain }}.{{ domain }}"
-  when: "({{ authenticator }} == 'standalone' and {{ server_type}}  == 'apache' and not {{ cert_exists.stat.exists }} or {{ cert_exists.stat.exists }} and {{ days_remaining | int }} < {{ renew_days }} and {{ server_type }} == 'apache')"
+    - name: print days_remaining
+      debug:
+        msg: "Certificate will expire in {{ ssl_days_remaining }} days"
+  when: ( "{{ cert_exists.stat.exists }}" and "{{ revoke }}" is undefined )
 
-- name: Generate certificate (Standalone) nginx install
-  command: "letsencrypt --installer nginx --agree-tos --agree-dev-preview -d {{ subdomain }}.{{ domain }}"
-  when: "({{ authenticator }} == 'standalone' and {{ server_type }} == 'nginx' and not {{ cert_exists.stat.exists }} or {{ cert_exists.stat.exists }} and {{ days_remaining | int }} < {{ renew_days }} and {{ server_type }} == 'nginx')"
+- block:
+    - name: set force_renew_command
+      set_fact:
+        force_renew_command: "--force-renewal"
+      when: ( "{{ force_renewal }}" is defined )
+
+    - name: Set force renewal fact
+      set_fact:
+        force_renew: "{{ force_renew_command | default('') }}"
+
+    - name: Generate certificate (Standalone) no install
+      command: "letsencrypt {{ force_renew }} --agree-tos certonly -d {{ subdomain }}.{{ domain }}"
+      when: ( "{{ server_type }}" == "" and (( not "{{ cert_exists.stat.exists }}" ) or ( "{{ cert_exists.stat.exists }}" and "{{ ssl_days_remaining }}" < "{{ renew_days | int }}" ) or ( "{{ force_renewal }}" is defined )))
+
+    - name: Generate certificate (Standalone) apache install
+      command: "letsencrypt {{ force_renew }} --agree-tos --installer apache certonly -d {{ subdomain }}.{{ domain }}"
+      when: ( "{{ server_type }}" == "apache" and (( not "{{ cert_exists.stat.exists }}" ) or ( "{{ cert_exists.stat.exists }}" and "{{ ssl_days_remaining }}" < "{{ renew_days }}" ) or ( "{{ force_renewal }}" is defined )))
+
+    - name: Generate certificate (Standalone) nginx install
+      command: "letsencrypt {{ force_renew }} --agree-tos --installer nginx certonly -d {{ subdomain }}.{{ domain }}"
+      when: ( "{{ server_type }}" == "nginx" and (( not "{{ cert_exists.stat.exists }}" ) or ( "{{ cert_exists.stat.exists }}" and "{{ ssl_days_remaining }}" < "{{ renew_days }}" ) or ( "{{ force_renewal }}" is defined )))
+  when: ( "{{ revoke }}" is undefined and "{{ authenticator }}" == "standalone" )
 
 - name: Revoke certificate
-  command: "letsencrypt --agree-tos --agree-dev-preview --cert-path={{ certificate_path }}/{{ subdomain }}.{{ domain }}/cert.pem"
-  when: revoke is defined and cert_exists.stat.exists
+  command: "letsencrypt revoke --cert-path {{ certificate_path }}/{{ subdomain }}.{{ domain }}/cert.pem"
+  when: ( "{{ revoke }}" is defined and "{{ cert_exists.stat.exists }}" )

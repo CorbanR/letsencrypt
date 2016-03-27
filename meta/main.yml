@@ -1,7 +1,7 @@
 ---
 galaxy_info:
   author: Corban Raun
-  description: Generated certificates via lets encrypt.
+  description: Generated certificates via lets encrypt (Standalone).
   issue_tracker_url: https://github.com/CorbanR/ansible-letsencrypt/issues
   license: MIT
   min_ansible_version: 2.0

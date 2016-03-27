@@ -12,10 +12,12 @@ server = {{ letsencrypt_server }}
 # Uncomment and update to register with the specified e-mail address
 email = {{ letsencrypt_email }}
 {% endif %}
+
 {% if text_interface is defined %}
 # Uncomment to use a text interface instead of ncurses
 text = True
 {% endif %}
+
 {% if authenticator == "standalone" %}
 # Uncomment to use the standalone authenticator on port 443
 authenticator = standalone
