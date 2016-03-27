@@ -1,7 +1,0 @@
----
-- hosts: letsencrypt
-  remote_user: vagrant
-  become: yes
-  vars:
-  roles:
-    - letsencrypt

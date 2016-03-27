@@ -2,7 +2,6 @@ letsencrypt
 -------------------
 Installs letsencrypt and optionally generates/installs a certificate.
 
-*** This is still in testing ***
 
 Generate Cert
 -------------
@@ -30,7 +29,7 @@ Example:
     domain: example.com
     letsencrypt_email: example@example.com
   roles:
-    - letsencrypt
+    - craun.letsencrypt
 ```
 
 Defaults
@@ -38,7 +37,6 @@ Defaults
 - `letsencrypt_gitlocation: /opt/letsencrypt`
 
 - `rsa_key_size: 2048`
-- `letsencrypt_server: https://acme-staging.api.letsencrypt.org/directory`
 - `standalone_supported_challenges: "tls-sni-01"`
 - `authenticator: "standalone"`
 - `webroot_path: ""`

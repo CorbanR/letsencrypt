@@ -18,16 +18,17 @@
   when: cert_exists.stat.exists
 
 - name: Generate certificate (Standalone) no install
-  command: "letsencrypt certonly --agree-tos --agree-dev-preview -d {{ subdomain }}.{{ domain }}"
-  when: authenticator == "standalone" and not cert_exists.stat.exists or cert_exists.stat.exists and days_remaining | int < "{{ renew_days }}"
+  command: "letsencrypt certonly --agree-tos -d {{ subdomain }}.{{ domain }}"
+  when: "({{ authenticator }} == 'standalone' and not {{ cert_exists.stat.exists }}) or ({{ cert_exists.stat.exists }} and {{ days_remaining | int }} < {{ renew_days }})"
 
 - name: Generate certificate (Standalone) apache install
-  command: "letsencrypt --installer apache --agree-tos --agree-dev-preview -d {{ subdomain }}.{{ domain }}"
-  when: authenticator == "standalone" and server_type == "apache" and not cert_exists.stat.exists or cert_exists.stat.exists and days_remaining | int < "{{ renew_days }}" and server_type == "apache"
+  command: "letsencrypt --installer apache --agree-tos -d {{ subdomain }}.{{ domain }}"
+  when: "({{ authenticator }} == 'standalone' and {{ server_type}}  == 'apache' and not {{ cert_exists.stat.exists }} or {{ cert_exists.stat.exists }} and {{ days_remaining | int }} < {{ renew_days }} and {{ server_type }} == 'apache')"
 
 - name: Generate certificate (Standalone) nginx install
   command: "letsencrypt --installer nginx --agree-tos --agree-dev-preview -d {{ subdomain }}.{{ domain }}"
-  when: authenticator == "standalone" and server_type == "nginx" and not cert_exists.stat.exists or cert_exists.stat.exists and days_remaining | int < "{{ renew_days }}" and server_type == "nginx"
+  when: "({{ authenticator }} == 'standalone' and {{ server_type }} == 'nginx' and not {{ cert_exists.stat.exists }} or {{ cert_exists.stat.exists }} and {{ days_remaining | int }} < {{ renew_days }} and {{ server_type }} == 'nginx')"
+
 - name: Revoke certificate
   command: "letsencrypt --agree-tos --agree-dev-preview --cert-path={{ certificate_path }}/{{ subdomain }}.{{ domain }}/cert.pem"
   when: revoke is defined and cert_exists.stat.exists

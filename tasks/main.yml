@@ -39,14 +39,14 @@
   register: git_updated
 
 - name: Install letsencrypt
-  command: "./letsencrypt-auto --agree-tos --agree-dev-preview"
+  command: "./letsencrypt-auto --agree-tos"
   args:
     chdir: "{{ letsencrypt_gitlocation }}/"
     creates: "{{ letsencrypt_bin }}"
   ignore_errors: True
 
 - name: Update letsencrypt
-  command: "./letsencrypt-auto --agree-tos --agree-dev-preview"
+  command: "./letsencrypt-auto --agree-tos"
   register: upgrade_result
   args:
     chdir: "{{ letsencrypt_gitlocation }}/"
@@ -60,4 +60,4 @@
     state: link
 
 - include: generate-crt.yml
-  when: subdomain is defined and domain is defined and letsencrypt_email is defined
+  when: "{{ subdomain }} is defined and {{ domain }} is defined and {{ letsencrypt_email }} is defined"

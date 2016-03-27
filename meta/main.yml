@@ -1,0 +1,19 @@
+---
+galaxy_info:
+  author: Corban Raun
+  description: Generated certificates via lets encrypt.
+  issue_tracker_url: https://github.com/CorbanR/ansible-letsencrypt/issues
+  license: MIT
+  min_ansible_version: 2.0
+  platforms:
+  - name: Debian
+    versions:
+    - jessie
+  - name: Ubuntu
+    versions:
+    - trusty
+  galaxy_tags:
+  - networking
+  - system
+  - web
+dependencies: []
