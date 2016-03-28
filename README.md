@@ -42,7 +42,7 @@ Defaults
 - `letsencrypt_server: https://acme-staging.api.letsencrypt.org/directory`
 - `renew_days: 10`
 - `rsa_key_size: 2048`
-- `server_type: ""`
+- `ssl_days_remaining: "{{ renew_days }}"`
 - `standalone_supported_challenges: "tls-sni-01"`
 - `webroot_path: ""`
 
