@@ -14,7 +14,7 @@
     - python-pip
     - python-virtualenv
 
-- name: Install/Update pip packages pip
+- name: Install/Update pip packages
   pip:
     name: "{{ item }}"
     state: latest

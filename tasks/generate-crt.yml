@@ -13,42 +13,56 @@
   register: cert_exists
 
 - block:
-    - name: Check to see when cert expires
-      shell: "echo $((($(date --date \"$(date --date \"$(openssl x509 -in {{ certificate_path }}/{{ subdomain }}.{{ domain }}/cert.pem -noout -enddate | sed -n 's/notAfter=//p')\")\" +%s)-$(date --date now +%s))/86400))"
-      register: days_remaining
+    - block:
+        - name: Check to see when cert expires
+          shell: "echo $((($(date --date \"$(date --date \"$(openssl x509 -in {{ certificate_path }}/{{ subdomain }}.{{ domain }}/cert.pem -noout -enddate | sed -n 's/notAfter=//p')\")\" +%s)-$(date --date now +%s))/86400))"
+          register: days_remaining
 
-    - name: Set ssl_days_remaining fact
-      set_fact:
-        ssl_days_remaining: "{{ days_remaining.stdout | int + 1 }}"
+        - name: Print days_remaining
+          debug:
+            msg: "Certificate will expire in {{ days_remaining.stdout | int }} days"
 
-    - name: print days_remaining
-      debug:
-        msg: "Certificate will expire in {{ ssl_days_remaining }} days"
-  when: ( "{{ cert_exists.stat.exists }}" and "{{ revoke }}" is undefined )
+        - name: Set cert_expiring_soon var
+          set_fact:
+            cert_expiring_soon: yes
+          when: ( "{{ days_remaining.stdout | int }}" < "{{ renew_days | int }}" )
 
-- block:
-    - name: set force_renew_command
-      set_fact:
-        force_renew_command: "--force-renewal"
-      when: ( "{{ force_renewal }}" is defined )
+      when: cert_exists.stat.exists
 
-    - name: Set force renewal fact
-      set_fact:
-        force_renew: "{{ force_renew_command | default('') }}"
+    - block:
+        - name: Set force_renew_command
+          set_fact:
+            force_renew_command: "--force-renewal"
+          when: ( "{{ force_renewal }}" is defined )
 
-    - name: Generate certificate (Standalone) no install
-      command: "letsencrypt {{ force_renew }} --agree-tos certonly -d {{ subdomain }}.{{ domain }}"
-      when: ( "{{ server_type }}" == "" and (( not "{{ cert_exists.stat.exists }}" ) or ( "{{ cert_exists.stat.exists }}" and "{{ ssl_days_remaining }}" < "{{ renew_days | int }}" ) or ( "{{ force_renewal }}" is defined )))
+        - name: Set force renewal fact
+          set_fact:
+            force_renew: "{{ force_renew_command | default('') }}"
 
-    - name: Generate certificate (Standalone) apache install
-      command: "letsencrypt {{ force_renew }} --agree-tos --installer apache certonly -d {{ subdomain }}.{{ domain }}"
-      when: ( "{{ server_type }}" == "apache" and (( not "{{ cert_exists.stat.exists }}" ) or ( "{{ cert_exists.stat.exists }}" and "{{ ssl_days_remaining }}" < "{{ renew_days }}" ) or ( "{{ force_renewal }}" is defined )))
+        - name: Set installer_command fact
+          set_fact:
+            installer_command: "--installer"
+          when: ( "{{ server_type }}" is defined)
 
-    - name: Generate certificate (Standalone) nginx install
-      command: "letsencrypt {{ force_renew }} --agree-tos --installer nginx certonly -d {{ subdomain }}.{{ domain }}"
-      when: ( "{{ server_type }}" == "nginx" and (( not "{{ cert_exists.stat.exists }}" ) or ( "{{ cert_exists.stat.exists }}" and "{{ ssl_days_remaining }}" < "{{ renew_days }}" ) or ( "{{ force_renewal }}" is defined )))
-  when: ( "{{ revoke }}" is undefined and "{{ authenticator }}" == "standalone" )
+        - name: Set installer_server_type
+          set_fact:
+            installer_server_type: "{{ installer_command | default ('') }} {{ server_type | default('') }}"
+
+        - name: Generate certificate (Standalone) no install
+          command: "letsencrypt {{ force_renew }} {{ installer_server_type }} --agree-tos certonly -d {{ subdomain }}.{{ domain }}"
+          when: not cert_exists.stat.exists
+
+        - name: Generate certificate (Standalone) no install
+          command: "letsencrypt {{ force_renew }} {{ installer_server_type }} --agree-tos certonly -d {{ subdomain }}.{{ domain }}"
+          when: cert_exists.stat.exists and ( "{{ cert_expiring_soon }}" is defined )
+
+        - name: Generate certificate (Standalone) no install
+          command: "letsencrypt {{ force_renew }} {{ installer_server_type }} --agree-tos certonly -d {{ subdomain }}.{{ domain }}"
+          when: cert_exists.stat.exists and ( "{{ force_renewal }}" is defined )
+
+      when: ( "{{ authenticator }}" == "standalone" )
+  when: ( "{{ revoke }}" is not defined )
 
 - name: Revoke certificate
   command: "letsencrypt revoke --cert-path {{ certificate_path }}/{{ subdomain }}.{{ domain }}/cert.pem"
-  when: ( "{{ revoke }}" is defined and "{{ cert_exists.stat.exists }}" )
+  when: cert_exists.stat.exists and ( "{{ revoke }}" is defined )
