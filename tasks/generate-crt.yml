@@ -25,7 +25,7 @@
         - name: Set cert_expiring_soon var
           set_fact:
             cert_expiring_soon: yes
-          when: ( "{{ days_remaining.stdout | int }}" < "{{ renew_days | int }}" )
+          when: ( "{{ days_remaining.stdout | int  <  renew_days | int }}" )
 
       when: cert_exists.stat.exists
 
