@@ -43,7 +43,7 @@ Defaults
 - `renew_days: 10`
 - `rsa_key_size: 2048`
 - `ssl_days_remaining: "{{ renew_days }}"`
-- `standalone_supported_challenges: "tls-sni-01"`
+- `preferred_challenges: "tls-sni-01"`
 - `webroot_path: ""`
 
 To Do
