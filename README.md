@@ -1,4 +1,3 @@
-![alt text](https://travis-ci.org/CorbanR/letsencrypt.svg?branch=master)
 letsencrypt(DEPRECATED)
 -------------------
 DEPRECATED see https://docs.ansible.com/ansible/latest/modules/letsencrypt_module.html
