@@ -1,6 +1,8 @@
 ![alt text](https://travis-ci.org/CorbanR/letsencrypt.svg?branch=master)
-letsencrypt
+letsencrypt(DEPRECATED)
 -------------------
+DEPRECATED see https://docs.ansible.com/ansible/latest/modules/letsencrypt_module.html
+
 Installs letsencrypt and generates/installs a certificate.
 
 
