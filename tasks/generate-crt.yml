@@ -33,7 +33,7 @@
         - name: Set force_renew_command
           set_fact:
             force_renew_command: "--force-renewal"
-          when: ( "{{ force_renewal }}" is defined )
+          when: ( force_renewal is defined )
 
         - name: Set force renewal fact
           set_fact:
@@ -42,7 +42,7 @@
         - name: Set installer_command fact
           set_fact:
             installer_command: "--installer"
-          when: ( "{{ server_type }}" is defined)
+          when: ( server_type is defined)
 
         - name: Set installer_server_type
           set_fact:
@@ -54,15 +54,15 @@
 
         - name: Generate certificate (Standalone) no install
           command: "letsencrypt {{ force_renew }} {{ installer_server_type }} --agree-tos certonly -d {{ subdomain }}.{{ domain }}"
-          when: cert_exists.stat.exists and ( "{{ cert_expiring_soon }}" is defined )
+          when: cert_exists.stat.exists and ( cert_expiring_soon is defined )
 
         - name: Generate certificate (Standalone) no install
           command: "letsencrypt {{ force_renew }} {{ installer_server_type }} --agree-tos certonly -d {{ subdomain }}.{{ domain }}"
-          when: cert_exists.stat.exists and ( "{{ force_renewal }}" is defined )
+          when: cert_exists.stat.exists and ( force_renewal is defined )
 
       when: ( "{{ authenticator }}" == "standalone" )
-  when: ( "{{ revoke }}" is not defined )
+  when: ( revoke is undefined )
 
 - name: Revoke certificate
   command: "letsencrypt revoke --cert-path {{ certificate_path }}/{{ subdomain }}.{{ domain }}/cert.pem"
-  when: cert_exists.stat.exists and ( "{{ revoke }}" is defined )
+  when: cert_exists.stat.exists and ( revoke is defined )
